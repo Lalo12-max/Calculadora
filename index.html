@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regla de Cramer - Resolución de Ecuaciones</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Función para calcular el determinante de una matriz 2x2
+        function calcularDeterminante(matriz) {
+            return (matriz[0][0] * matriz[1][1]) - (matriz[0][1] * matriz[1][0]);
+        }
+
+        // Función para convertir las entradas de fracciones a números
+        function evaluarEntrada(valor) {
+            if (valor.includes('/')) {
+                return eval(valor); // evalúa expresiones como "1/2"
+            }
+            return parseFloat(valor);
+        }
+
+        // Función para validar que el valor no sea negativo
+        function validarEntrada(valor) {
+            // Verifica si el valor es exactamente "-"
+            if (valor.trim() === "-") {
+                alert("Por favor, introduce un número positivo o un número negativo seguido de un número positivo.");
+                return false;
+            }
+        
+            // Expresión regular para validar números (incluye fracciones)
+            const regex = /^-?\d+(\.\d+)?$|^-?\d+\/\d+$/; 
+        
+            // Si el valor no es numérico o una fracción, mostrar alerta
+            if (!regex.test(valor)) {
+                alert("Por favor, introduce solo números o fracciones (ejemplo: 1/2).");
+                return false;
+            }
+        
+            // Evaluar el número
+            const num = evaluarEntrada(valor);
+        
+            // Si es un número negativo, verificar si hay un número positivo en las demás entradas
+            if (num < 0) {
+                const inputs = ['a1', 'b1', 'c1', 'a2', 'b2', 'c2'];
+                const hasPositive = inputs.some(id => evaluarEntrada(document.getElementById(id).value) > 0);
+        
+                if (!hasPositive) {
+                    alert("Debes introducir al menos un número positivo junto a un número negativo.");
+                    return false;
+                }
+            }
+        
+            return true;
+        }
+        
+        
+
+        // Función para aplicar la Regla de Cramer y mostrar el procedimiento
+        function reglaDeCramer() {
+            const a1 = document.getElementById('a1').value;
+            const b1 = document.getElementById('b1').value;
+            const c1 = document.getElementById('c1').value;
+            const a2 = document.getElementById('a2').value;
+            const b2 = document.getElementById('b2').value;
+            const c2 = document.getElementById('c2').value;
+
+            // Validar entradas
+            if (![a1, b1, c1, a2, b2, c2].every(validarEntrada)) {
+                return; // Si hay algún valor inválido, detener la ejecución
+            }
+
+            // Evaluar las entradas para cálculos
+            const matrizCoeficientes = [
+                [evaluarEntrada(a1), evaluarEntrada(b1)],
+                [evaluarEntrada(a2), evaluarEntrada(b2)]
+            ];
+
+            // Calcular el determinante principal (Δ)
+            const delta = calcularDeterminante(matrizCoeficientes);
+
+            // Mostrar el determinante principal con los números ingresados
+            document.getElementById('procedimiento').innerHTML = `
+                <h3>Determinante principal (Δ):</h3>
+                <p>Matriz de coeficientes:</p>
+                <p>|${a1}&nbsp;&nbsp;${b1}|</p>
+                <p>|${a2}&nbsp;&nbsp;${b2}|</p>
+                <p>Δ = (${a1} * ${b2}) - (${b1} * ${a2}) = ${delta}</p>
+            `;
+
+            if (delta === 0) {
+                // Si Δ = 0, verificar si hay infinitas soluciones o no hay solución
+                const matrizX = [
+                    [evaluarEntrada(c1), evaluarEntrada(b1)],
+                    [evaluarEntrada(c2), evaluarEntrada(b2)]
+                ];
+                const matrizY = [
+                    [evaluarEntrada(a1), evaluarEntrada(c1)],
+                    [evaluarEntrada(a2), evaluarEntrada(c2)]
+                ];
+
+                const deltaX = calcularDeterminante(matrizX);
+                const deltaY = calcularDeterminante(matrizY);
+
+                if (deltaX === 0 && deltaY === 0) {
+                    document.getElementById('resultado').textContent = "El sistema tiene infinitas soluciones.";
+                } else {
+                    document.getElementById('resultado').textContent = "El sistema no tiene solución.";
+                }
+            } else {
+                // Crear las matrices Δx y Δy
+                const matrizX = [
+                    [evaluarEntrada(c1), evaluarEntrada(b1)],
+                    [evaluarEntrada(c2), evaluarEntrada(b2)]
+                ];
+                const matrizY = [
+                    [evaluarEntrada(a1), evaluarEntrada(c1)],
+                    [evaluarEntrada(a2), evaluarEntrada(c2)]
+                ];
+
+                // Calcular los determinantes Δx y Δy
+                const deltaX = calcularDeterminante(matrizX);
+                const deltaY = calcularDeterminante(matrizY);
+
+                // Mostrar los determinantes Δx y Δy con los números ingresados
+                document.getElementById('procedimiento').innerHTML += `
+                    <h3>Determinante para x (Δx):</h3>
+                    <p>Matriz para Δx:</p>
+                    <p>|${c1}&nbsp;&nbsp;${b1}|</p>
+                    <p>|${c2}&nbsp;&nbsp;${b2}|</p>
+                    <p>Δx = (${c1} * ${b2}) - (${b1} * ${c2}) = ${deltaX}</p>
+
+                    <h3>Determinante para y (Δy):</h3>
+                    <p>Matriz para Δy:</p>
+                    <p>|${a1}&nbsp;&nbsp;${c1}|</p>
+                    <p>|${a2}&nbsp;&nbsp;${c2}|</p>
+                    <p>Δy = (${a1} * ${c2}) - (${c1} * ${a2}) = ${deltaY}</p>
+                `;
+
+                // Calcular los valores de x y y
+                const x = deltaX / delta;
+                const y = deltaY / delta;
+
+                // Mostrar la solución con el procedimiento detallado
+                document.getElementById('resultado').innerHTML = `
+                    <h3>Solución:</h3>
+                    <p>x = Δx / Δ = ${deltaX} / ${delta} = ${x.toFixed(2)}</p>
+                    <p>y = Δy / Δ = ${deltaY} / ${delta} = ${y.toFixed(2)}</p>
+                `;
+
+                // Verificación de la solución sustituyendo en las ecuaciones originales
+                const ecuacion1 = (evaluarEntrada(a1) * x + evaluarEntrada(b1) * y).toFixed(2);
+                const ecuacion2 = (evaluarEntrada(a2) * x + evaluarEntrada(b2) * y).toFixed(2);
+
+                document.getElementById('verificacion').innerHTML = `
+                    <h3>Verificación:</h3>
+                    <p>Ecuación 1: ${a1} * ${x.toFixed(2)} + ${b1} * ${y.toFixed(2)} = ${ecuacion1} (¿Es igual a ${c1}?)</p>
+                    <p>Ecuación 2: ${a2} * ${x.toFixed(2)} + ${b2} * ${y.toFixed(2)} = ${ecuacion2} (¿Es igual a ${c2}?)</p>
+                `;
+
+                if (Math.abs(ecuacion1 - evaluarEntrada(c1)) < 0.01 && Math.abs(ecuacion2 - evaluarEntrada(c2)) < 0.01) {
+                    document.getElementById('verificacionResultado').textContent = "¡La solución es correcta!";
+                } else {
+                    document.getElementById('verificacionResultado').textContent = "La solución no es correcta.";
+                }
+            }
+        }
+
+        // Función para convertir las fracciones a decimales
+        function convertirADecimales() {
+            const inputs = [ 'a1', 'b1', 'c1', 'a2', 'b2', 'c2' ];
+            inputs.forEach(id => {
+                const input = document.getElementById(id);
+                const valor = evaluarEntrada(input.value);
+                input.value = valor.toFixed(2); // Muestra el valor en decimal
+            });
+            alert("Las fracciones han sido convertidas a decimales.");
+        }
+    </script>
+</head>
+<body>
+    <h1>Regla de Cramer - Resolución de Ecuaciones</h1>
+    <p>Introduce los coeficientes de las ecuaciones de la forma: ax + by = c</p>
+
+    <form onsubmit="event.preventDefault(); reglaDeCramer();">
+        <div>
+            <h3>Ecuación 1:</h3>
+            <label for="a1">Coeficiente de x: </label>
+            <input type="text" id="a1" required>
+            <label for="b1">Coeficiente de y: </label>
+            <input type="text" id="b1" required>
+            <label for="c1">Resultado: </label>
+            <input type="text" id="c1" required>
+        </div>
+
+        <div>
+            <h3>Ecuación 2:</h3>
+            <label for="a2">Coeficiente de x: </label>
+            <input type="text" id="a2" required>
+            <label for="b2">Coeficiente de y: </label>
+            <input type="text" id="b2" required>
+            <label for="c2">Resultado: </label>
+            <input type="text" id="c2" required>
+        </div>
+
+        <button type="submit">Calcular</button>
+        <button type="button" onclick="convertirADecimales()">Convertir a decimales</button>
+    </form>
+
+    <h2>Procedimiento:</h2>
+    <div id="procedimiento"></div>
+
+    <h2>Resultado:</h2>
+    <div id="resultado"></div>
+
+    <h2>Verificación:</h2>
+    <div id="verificacion"></div>
+
+    <h3 id="verificacionResultado"></h3>
+</body>
+</html>
